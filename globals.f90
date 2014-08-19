@@ -12,6 +12,15 @@ module globals
   integer, parameter     :: num_beams = 6                   ! Number of trapping beams
   real(wp), parameter    :: pi = 3.14159265358979_wp        ! pi! REAL: VERY WEIRD BUGS HAPPEN IF YOU SET PI=3
 
+  ! flag to choose hamiltonian
+  integer, parameter :: hamiltonian_version = 0   ! 0: use the full effective hamiltonian
+                                                  ! 1: use the large delta hamiltonian (real only)
+  ! flag to choose integration method
+  integer, parameter :: step_method = 2           ! 0: use the adaptive stepping integrator odeab90 (default)
+                                                  ! 1: use the rk4 integrator
+                                                  ! 2: use the euler integrator
+
+
   ! Constants in alternative unit system for Rb:
   ! - mass measured in atomic mass of Rb (~10^-25 kg)
   ! - length measured in wavelength of D2 Transition (~780 nm)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Dataset:
-dataset_title="testing_running_time"
+dataset_title="steptype-adaptive"
 
 # For this simulation
 
@@ -11,7 +11,7 @@ dataset_title="testing_running_time"
 # threshhold was chosen randomly by what seems to work OK... not really certain how to pick it
 # motradius was also chosen somewhat randomly, probably could figure out a value based on the beam diameters
 
-reps=1
+reps=5
 for ((i=1;i<=reps;i++)); do
 echo Starting rep $i...
 
@@ -26,7 +26,7 @@ vz=0.0001
 tstep=0.1
 tfinal=100000
 save_interval=100
-seed=2
+seed=$i
 focalradius=48.07
 focalthreshhold=58
 motradius=300

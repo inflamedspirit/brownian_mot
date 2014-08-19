@@ -91,10 +91,8 @@ program mot
                                ! 2: atom has returned to focalradius after being in state 1 (end simulation)
                                ! 3: atom has escaped beyond the motradius                   (end simulation)
 
-  ! flag to choose integration method
-  integer :: step_method = 2   ! 0: use the adaptive stepping integrator odeab90 (default)
-                               ! 1: use the rk4 integrator
-                               ! 2: use the euler integrator
+
+
 
   integer :: min_arguments = 13 !
 
