@@ -92,8 +92,9 @@ program mot
                                ! 3: atom has escaped beyond the motradius                   (end simulation)
 
   ! flag to choose integration method
-  integer :: step_method = 0   ! 0: use the adaptive stepping integrator odeab90 (default)
+  integer :: step_method = 2   ! 0: use the adaptive stepping integrator odeab90 (default)
                                ! 1: use the rk4 integrator
+                               ! 2: use the euler integrator
 
   integer :: min_arguments = 13 !
 
@@ -222,6 +223,8 @@ program mot
   call get_command(buff)
   write(*,*) "#", buff
 
+  
+
   write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, escape_state
 
 
@@ -235,6 +238,9 @@ program mot
         call odeab(t, t+tstep)
      else if ( step_method .eq. 1) then
         call rk4step(y, t, tstep)
+        t = t+tstep
+     else if ( step_method .eq. 2) then
+        call eulerstep(y, t, tstep)
         t = t+tstep
      end if
 
@@ -333,7 +339,7 @@ program mot
     ! call handle_odeab_error()
 
     ! Calculate exact solution and output results; needs reformatting?
-
+    call calc_H( Delta, y(:,1), y(:,2) )
     if ( mod( l, save_interval ) .eq. 0 .or. escape_state .eq. 2 .or. escape_state .eq. 3 ) then
        write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, escape_state
     end if

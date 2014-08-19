@@ -39,6 +39,18 @@ contains
 
   ! Subroutine to perform one Runge-Kutta step from t to t+dt
 
+  subroutine eulerstep(y, t, dt)
+    implicit none
+    real(wp), dimension(3,2), intent(inout) :: y
+    real(wp), dimension(3,2) :: ydot
+    real(wp), intent(in) :: t, dt
+  
+
+    call odeab_func(t, y, ydot)
+    y = y + dt * ydot
+
+  end subroutine eulerstep
+
   subroutine rk4step(y, t, dt)
     implicit none
     real(wp), dimension(3,2), intent(inout) :: y
@@ -71,6 +83,7 @@ contains
 
 
   end subroutine rk4step
+
   
 
 end module rk4
