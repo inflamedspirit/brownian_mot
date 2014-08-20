@@ -13,7 +13,7 @@ SHELL = /bin/csh
 #   you could also use pgf90, another commercial compiler on the cluster,
 #   or gfortran, which you can install for free on your computer.
 F90 = gfortran
-F90FLAGS = -Ofast -pg
+F90FLAGS = -O3 -pg
 F90CFLAGS = -c
 F90LFLAGS =
 

@@ -16,10 +16,9 @@ module globals
   integer, parameter :: hamiltonian_version = 0   ! 0: use the full effective hamiltonian
                                                   ! 1: use the large delta hamiltonian (real only)
   ! flag to choose integration method
-  integer, parameter :: step_method = 2           ! 0: use the adaptive stepping integrator odeab90 (default)
+  integer, parameter :: step_method = 0           ! 0: use the adaptive stepping integrator odeab90 (default)
                                                   ! 1: use the rk4 integrator
                                                   ! 2: use the euler integrator
-
 
   ! Constants in alternative unit system for Rb:
   ! - mass measured in atomic mass of Rb (~10^-25 kg)

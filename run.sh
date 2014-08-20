@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Dataset:
-dataset_title="steptype-adaptive"
+dataset_title="test_ham_alt4"
 
 # For this simulation
 
@@ -20,11 +20,11 @@ rabi_frequency=0.707
 detuning=-1.0
 wavenumber=1.0
 decay_rate=1.0
-vx=0.02
-vy=0.0001
-vz=0.0001
+vx=0.0
+vy=0.0
+vz=0.0
 tstep=0.1
-tfinal=100000
+tfinal=35000
 save_interval=100
 seed=$i
 focalradius=48.07

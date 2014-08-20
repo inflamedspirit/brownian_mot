@@ -182,8 +182,9 @@ program mot
 
   nout = nint(tfinal/tstep)
   if ( nout .gt. 50000000 ) then
-    write(0,*)  "Error: too many steps, are you crrrrazy??!"
-    call usage()
+!    write(0,*)  "Error: too many steps, are you crrrrazy??!"
+    write(0,*)  "Warning: many steps, are you crrrrazy??!"
+    !call usage()
   end if
 
   call get_command_argument(13, buff)
@@ -337,7 +338,12 @@ program mot
     ! call handle_odeab_error()
 
     ! Calculate exact solution and output results; needs reformatting?
-    call calc_H( Delta, y(:,1), y(:,2) )
+    if ( hamiltonian_version .eq. 0 ) then
+       call calc_H( Delta, y(:,1), y(:,2) )
+    else if ( hamiltonian_version .eq. 1) then
+       call calc_H_dipole( Delta, y(:,1), y(:,2) )
+    end if
+
     if ( mod( l, save_interval ) .eq. 0 .or. escape_state .eq. 2 .or. escape_state .eq. 3 ) then
        write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, escape_state
     end if

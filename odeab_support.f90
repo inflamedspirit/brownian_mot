@@ -58,6 +58,9 @@ subroutine odeab_func(t, rp, rpdot)
   r = rp(:,1)
   p = rp(:,2)
 
+
+
+  if ( hamiltonian_version .eq. 0 ) then
   ! Detuning Matrix Construction
 
   ! The following are the construction of H, dH/dr, and dH/dp. H isn't explicitely needed,
@@ -71,13 +74,18 @@ subroutine odeab_func(t, rp, rpdot)
 !  call calc_dHdr( dHdr, Delta, r )
   call calc_dHdr2( dHdr, Delta, r )
  ! call calc_dHdr3( dHdr, Delta, r )
-  call calc_dHdr4( dHdr, Delta, r )
+ ! call calc_dHdr4( dHdr, Delta, r )
 
   ! dH/dp construction
 !  call calc_dHdp( dHdp, Delta, r, p )
   call calc_dHdp2( dHdp, Delta, r, p )
 !  call calc_dHdp3( dHdp, Delta, r, p )
 !  call calc_dHdp4( dHdp, Delta, r, p )
+  else if ( hamiltonian_version .eq. 1 ) then
+     call calc_Delta_dipole( Delta )
+     call calc_dHdr_dipole( dHdr, Delta, r )
+     call calc_dHdp_dipole( dHdp, p )
+  end if
 
   ! Classical Hamiltonian Evolution
   rdot = dHdp
@@ -370,6 +378,65 @@ subroutine calc_H(Delta, r, p)
 
 end subroutine calc_H
 
+
+! hasn't been changed yet
+subroutine calc_H_dipole(Delta, r, p)
+  implicit none
+
+  complex(wp) :: sum1, sum2
+  real(wp), dimension(num_beams), intent(in) :: Delta
+  real(wp), dimension(3), intent(in) :: r
+  real(wp), dimension(3), intent(in) :: p
+  integer j
+
+  sum1 = 0.0_wp
+
+  do j=1,num_beams
+     sum1 = sum1 + Rabi(j)*exp(i*dot_product(k(:,j),r))
+  end do
+  
+  H = dot_product(p,p)/(2.0_wp*m) + (2.0_wp*hbar*Delta(1))/(4.0_wp*Delta(1)*Delta(1)+Gamma*Gamma)*sum1*conjg(sum1)
+
+end subroutine calc_H_dipole
+
+subroutine calc_dHdr_dipole(dHdr, Delta, r)
+  implicit none
+
+  complex(wp) :: sum1, sum2, temp1
+  real(wp), dimension(3), intent(out) :: dHdr
+  real(wp), dimension(num_beams), intent(in) :: Delta
+  real(wp), dimension(3), intent(in) :: r
+  integer j, jj
+
+  do j=1,3
+     sum1 = 0.0_wp
+     sum2 = 0.0_wp
+     do jj=1,num_beams
+        temp1 = Rabi(jj)*exp(i*dot_product(k(:,jj),r))
+        sum1 = sum1 + temp1
+        sum2 = sum2 + i*k(j,jj)*temp1
+     end do
+     dHdr(j) = (2.0_wp*hbar*Delta(1))/(4.0_wp*Delta(1)*Delta(1)+Gamma*Gamma)&
+     *(sum1*conjg(sum2)+sum2*conjg(sum1))
+!     write(0,*) sum1,sum2,dHdr
+  end do
+end subroutine calc_dHdr_dipole
+
+subroutine calc_dHdp_dipole(dHdp, p)
+  implicit none
+
+  real(wp), dimension(3), intent(out) :: dHdp
+  real(wp), dimension(3), intent(in) :: p
+  integer j
+
+  do j=1,3
+     dHdp(j) = p(j)/m
+  end do
+
+end subroutine calc_dHdp_dipole
+
+
+
 ! Delta calculation
 subroutine calc_Delta(Delta, p)
   implicit none
@@ -383,6 +450,17 @@ subroutine calc_Delta(Delta, p)
   end do
 end subroutine calc_Delta
 
+
+subroutine calc_Delta_dipole(Delta)
+  implicit none
+
+  real(wp), dimension(num_beams), intent(out) :: Delta
+  integer j
+
+  do j=1,num_beams
+     Delta(j) = Delta_base(j) - (hbar * dot_product(k(:,j), k(:,j)) / (2.0_wp*m))
+  end do
+end subroutine calc_Delta_dipole
 
 
 
