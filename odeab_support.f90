@@ -402,11 +402,13 @@ end subroutine calc_H_dipole
 subroutine calc_dHdr_dipole(dHdr, Delta, r)
   implicit none
 
-  complex(wp) :: sum1, sum2, temp1
+  complex(wp) :: sum1, sum2, temp1, temp2
   real(wp), dimension(3), intent(out) :: dHdr
   real(wp), dimension(num_beams), intent(in) :: Delta
   real(wp), dimension(3), intent(in) :: r
   integer j, jj
+
+  temp2 = (4.0_wp*hbar*Delta(1))/(4.0_wp*Delta(1)*Delta(1)+Gamma*Gamma) ! factor of 2 for taking the real part in dHdr
 
   do j=1,3
      sum1 = 0.0_wp
@@ -416,8 +418,7 @@ subroutine calc_dHdr_dipole(dHdr, Delta, r)
         sum1 = sum1 + temp1
         sum2 = sum2 + i*k(j,jj)*temp1
      end do
-     dHdr(j) = (2.0_wp*hbar*Delta(1))/(4.0_wp*Delta(1)*Delta(1)+Gamma*Gamma)&
-     *(sum1*conjg(sum2)+sum2*conjg(sum1))
+     dHdr(j) = temp2*Real(sum1*conjg(sum2))
 !     write(0,*) sum1,sum2,dHdr
   end do
 end subroutine calc_dHdr_dipole

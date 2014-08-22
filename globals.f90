@@ -13,7 +13,7 @@ module globals
   real(wp), parameter    :: pi = 3.14159265358979_wp        ! pi! REAL: VERY WEIRD BUGS HAPPEN IF YOU SET PI=3
 
   ! flag to choose hamiltonian
-  integer, parameter :: hamiltonian_version = 0   ! 0: use the full effective hamiltonian
+  integer, parameter :: hamiltonian_version = 1   ! 0: use the full effective hamiltonian
                                                   ! 1: use the large delta hamiltonian (real only)
   ! flag to choose integration method
   integer, parameter :: step_method = 0           ! 0: use the adaptive stepping integrator odeab90 (default)
