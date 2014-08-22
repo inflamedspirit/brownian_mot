@@ -19,6 +19,7 @@ module globals
   integer, parameter :: step_method = 0           ! 0: use the adaptive stepping integrator odeab90 (default)
                                                   ! 1: use the rk4 integrator
                                                   ! 2: use the euler integrator
+                                                  ! 3: use the verlet step integrator
 
   ! Constants in alternative unit system for Rb:
   ! - mass measured in atomic mass of Rb (~10^-25 kg)

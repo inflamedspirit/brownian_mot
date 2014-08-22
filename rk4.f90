@@ -84,6 +84,26 @@ contains
 
   end subroutine rk4step
 
+subroutine verletstep(y, t, dt)
+    implicit none
+    real(wp), dimension(3,2), intent(inout) :: y
+    real(wp), intent(in) :: t, dt
+    real(wp), dimension(3) :: r,p
+    real(wp), dimension(num_beams) :: Delta
+    real(wp), dimension(3) :: dHdr = 0.0_wp
+    integer j
+    r=y(:,1)
+    p=y(:,2)
+
+    call calc_Delta( Delta, p)
+ 
+    call calc_dHdr_dipole( dHdr, Delta, r + p*dt*0.5_wp )
+    y(:,2) = p - dHdr*dt                ! pnew=...
+    y(:,1) = r + 0.5_wp*(p + y(:,2))*dt ! rnew = ...
+
+
+end subroutine verletstep
+
   
 
 end module rk4

@@ -86,11 +86,11 @@ program mot
   integer                        :: spontaneous_emission_flag = 1
 
   ! declare variables for return/escape probabilities
-  integer :: escape_state = 0  ! 0: initial state, atom still in focalradius
-                               ! 1: atom has passed beyond theshhold and is diffusing
-                               ! 2: atom has returned to focalradius after being in state 1 (end simulation)
-                               ! 3: atom has escaped beyond the motradius                   (end simulation)
-
+  integer :: escape_state = 0      ! 0: initial state, atom still in focalradius
+                                   ! 1: atom has passed beyond theshhold and is diffusing
+                                   ! 2: atom has returned to focalradius after being in state 1 (end simulation)
+                                   ! 3: atom has escaped beyond the motradius                   (end simulation)
+  real(wp) :: escape_time = 0.0_wp ! The time that the atom first exited the threshhold.
 
 
 
@@ -207,6 +207,9 @@ program mot
      call rk4init()
   end if
 
+  if ( step_method .eq. 3 .and. hamiltonian_version .eq. 0) then       
+     write(0,*) "WARNING: Verlet step automatically uses dipole Hamiltonian."
+  end if
 
   ! Set initial values
   r0(1) = 0.0_wp ! 128165.0_wp
@@ -235,11 +238,15 @@ program mot
 
      if ( step_method .eq. 0 ) then
         call odeab(t, t+tstep)
+        ! odeab automatically steps t forward.
      else if ( step_method .eq. 1) then
         call rk4step(y, t, tstep)
         t = t+tstep
      else if ( step_method .eq. 2) then
         call eulerstep(y, t, tstep)
+        t = t+tstep
+     else if ( step_method .eq. 3) then       
+        call verletstep(y, t, tstep)
         t = t+tstep
      end if
 
@@ -323,14 +330,20 @@ program mot
 
     ! Do escape/return probability checks
     if ( escape_state .eq. 0 .and. dot_product(y(:,1),y(:,1)) .gt. focalthreshhold**2  ) then
+       escape_state = 1
+       escape_time = t
        write(0,*) "escape_state = 1; atom has exited threshhold and is diffusing! "     
-       escape_state = 1;
+       write(0,*) "escape_time = ", escape_time
     else if ( escape_state .eq. 1 .and. dot_product(y(:,1),y(:,1)) .lt. focalradius**2  ) then
+       escape_state = 2
        write(0,*) "escape_state = 2; atom has returned to the focal volume! (stopping...) "     
-       escape_state = 2;
+       write(0,*) "return_time = ", t
+       write(0,*) "diffusion_time = ", t-escape_time
     else if ( escape_state .eq. 1 .and. dot_product(y(:,1),y(:,1)) .gt. motradius**2  ) then
+       escape_state = 3
        write(0,*) "escape_state = 3; atom has escaped from the mot volume! (stopping...) "     
-       escape_state = 3;
+       write(0,*) "ejection_time = ", t
+       write(0,*) "diffusion_time = ", t-escape_time
     end if
 
     ! Checking For Errors while integrating.
@@ -355,6 +368,16 @@ program mot
     end if
 
   end do
+  
+  if ( escape_state .eq. 0 ) then
+     write(0,*) "escape_state = 0; nothing happened... atom didn't pass threshhold (stopping...) "     
+     write(0,*) "stuck_time = ", t
+  end if
+
+  if ( escape_state .eq. 1 ) then
+     write(0,*) "escape_state = 1; atom passed threshhold but didn't come back or eject (stopping...) "     
+     write(0,*) "diffusion_time = ", t-escape_time
+  end if
 
   ! print performance statistics, if you're curious, to standard error
   call print_odeab_stats(cumulative = .true.)
