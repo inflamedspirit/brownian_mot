@@ -26,6 +26,10 @@
 !              evolution. Unfortunately, it doesn't seem to be faster, as
 !              I had been hoping.
 !
+!              -Added new solver type
+!              -Added new H type
+!              -Added 
+!              -Adding flourescence signal
 !-----------------------------------------------------------------------
 
 
@@ -41,6 +45,7 @@ program mot
   use odeab_support
   use odeab90
   use rk4
+  use linsol
   use utilities
 
   implicit none
@@ -84,6 +89,12 @@ program mot
   real(wp)                       :: theta
   integer                        :: num_emissions
   integer                        :: spontaneous_emission_flag = 1
+
+  ! declare variables for flourescence rate
+  real(wp)                       :: integration_time = 3811.700_wp ! 1 ms in 1/Gamma
+  real(wp)                       :: integration_reset_time = 0.0_wp
+  real(wp)                       :: fluorescence_rate = 0.0_wp
+  integer                        :: photons_counted = 0
 
   ! declare variables for return/escape probabilities
   integer :: escape_state = 0      ! 0: initial state, atom still in focalradius
@@ -189,6 +200,7 @@ program mot
 
   call get_command_argument(13, buff)
   save_interval = s2r(buff)
+  !integration_time = save_interval*tstep
 
   ! get random number seed, if specified
   if ( command_argument_count() .eq. (min_arguments + 1) ) then
@@ -227,7 +239,8 @@ program mot
 
   
 
-  write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, escape_state
+  write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), &
+       H, escape_state, fluorescence_rate
 
 
   !!!!!! Main integration loop
@@ -254,6 +267,11 @@ program mot
     ! First calculate <sigma^dagger sigma> (<SDS>), and while were at it, we store the running
     ! sum into sds_array. This will be used only if the decay occurs, but might as well.
     if ( spontaneous_emission_flag .eq. 1 ) then
+  
+       if( dot_product(y(:,1),y(:,1)) .lt. focalradius**2 .and. rand_pl() .lt. photon_detection_efficiency ) then
+          photons_counted = photons_counted + 1 
+       end if
+
     sds_sum = 0.0_wp
     do j=1,num_beams
        ! Detuning Matrix Construction
@@ -357,8 +375,16 @@ program mot
        call calc_H_dipole( Delta, y(:,1), y(:,2) )
     end if
 
+    if ( (t-integration_reset_time) .gt. integration_time ) then
+       integration_reset_time = t;
+       fluorescence_rate = photons_counted!/integration_time  ! should be photons/integration time... but leave it like this to see
+       photons_counted = 0
+       write(0,*) "reseting photon integration counter"
+    end if
+
     if ( mod( l, save_interval ) .eq. 0 .or. escape_state .eq. 2 .or. escape_state .eq. 3 ) then
-       write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, escape_state
+       write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, &
+            escape_state, fluorescence_rate
     end if
 
     ! end the simulation if the atom has returned or escaped
@@ -397,7 +423,7 @@ program mot
     write(0,*) ''
     write(0,*) 'Usage: mot <Rabi> <Delta_base> <kval> <Gamma> <px> <py> <pz> <tstep> <tfinal> [seed]'
     write(0,*) ' Rabi        ->  scaled Rabi frequency'
-    write(0,*) ' Delta_base  ->  base detuning = omega-omega0'
+    write(0,*) ' Delta_base  ->  base detning = omega-omega0'
     write(0,*) ' kval        ->  magnitude of k vectors'
     write(0,*) ' Gamma       ->  spontaneous emission rate'
     write(0,*) ' px          ->  px at t=0'

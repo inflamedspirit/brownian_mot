@@ -29,6 +29,8 @@ module globals
   real(wp) :: lambda0    = 1.0_wp               ! D2 transition wavelength
   real(wp) :: Gamma      = 1.0_wp               ! Spontaneous emission rate
   real(wp) :: hbar       = 0.0000314909_wp      ! Reduced Plank's constant in m*Gamma*lambda0^2
+  real(wp) :: photon_detection_efficiency = 0.0007510 ! Detection efficiency due to solid angle and detector efficiency.
+!  real(wp) :: photon_detection_efficiency = 0.7510 ! Detection efficiency due to solid angle and detector efficiency.  1000 times better than what we really have
 
   real(wp) :: kval                              ! k-vector magnitude
   real(wp), dimension(3)   :: r0                ! position at t=0
