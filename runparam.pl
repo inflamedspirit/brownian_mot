@@ -11,7 +11,7 @@ our $stderrfile;
 our $rabi_frequency;
 our $detuning;
 our $wavenumber;
-our $decay_rate;
+our $step_size;
 our $vx;
 our $vy;
 our $vz;
@@ -31,4 +31,4 @@ my $paramfile = $ARGV[0];
 require $paramfile;
 
 # Launch Mot
-system("time ./mot $rabi_frequency $detuning $wavenumber $decay_rate $vx $vy $vz $focalradius $focalthreshhold $motradius $tstep $tfinal $save_interval $seed 1> $stdoutfile 2> $stderrfile ");
+system("time ./mot $rabi_frequency $detuning $wavenumber $step_size $vx $vy $vz $focalradius $focalthreshhold $motradius $tstep $tfinal $save_interval $seed 1> $stdoutfile 2> $stderrfile ");

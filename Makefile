@@ -47,8 +47,8 @@ EXECUTABLES = mot
 
 all: $(EXECUTABLES)
 
-mot: mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o linsol.o testlin.o
-	$(F90_LOAD) mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o linsol.o testlin.o -o mot
+mot: mot.o globals.o utilities.o random_pl.o
+	$(F90_LOAD) mot.o globals.o utilities.o random_pl.o -o mot
 
 #testlin: testlin.o globals.o
 #	$(F90_LOAD) testlin.o globals.o linsol.o \
@@ -56,16 +56,9 @@ mot: mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o lin
 #         dgefa.o dgesl.o dgedi.o daxpy.o ddot.o  dscal.o dswap.o idamax.o \
 
 
-mot.o: globals.mod odeab90.mod odeab_support.mod utilities.mod random_pl.mod rk4.mod linsol.mod testlin.mod
-odeab90.o: odeab_support.mod
-linsol.o: globals.mod
-odeab90.mod: odeab_support.mod
-odeab_support.mod: globals.mod
-linsol.mod: globals.mod
-rk4.mod: globals.mod odeab_support.mod
+mot.o: globals.mod utilities.mod random_pl.mod
 utilities.mod: globals.mod
 random_pl: globals.mod
-testlin.mod: globals.mod linsol.mod
 
 # this is what to do when you type "make clean"
 

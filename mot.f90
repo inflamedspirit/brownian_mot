@@ -42,19 +42,16 @@ program mot
   ! (this is one of the nicest features of Fortran 90)
   use globals
   use random_pl
-  use odeab_support
-  use odeab90
-  use rk4
-  use linsol
   use utilities
-  use testlin
+
 
   implicit none
 
   ! declare storage for solution vector; this is specific to the odeab
   ! integrator-- only modify if you want to use real variables instead
   ! of complex (change complex -> real)
-  real(wp), dimension(:,:), pointer :: y
+!  real(wp), dimension(:,:), pointer :: y
+  real(wp), dimension(3,2) :: y
 
   ! declare variables to use below
   real(wp)       :: t = 0
@@ -74,6 +71,9 @@ program mot
   real(wp), dimension(3,2) :: y0   !      -> initial conditions storage
   integer :: save_interval         !      -> Save every N data points
   integer(rpk) :: seed             !      -> Seed for RNG
+
+  ! for brownian motion
+  real(wp)                       :: step_size
 
 
   ! declare variables for spontaneous emission:
@@ -162,7 +162,7 @@ program mot
   k(3,6) = -kval
 
   call get_command_argument(4, buff)
-  Gamma = s2r(buff)
+  step_size = s2r(buff) ! formerlly Gamma
 
   call get_command_argument(5, buff)
   p0(1) = s2r(buff)
@@ -217,16 +217,6 @@ program mot
 
   ! the integrator needs you to do this (just do it)
   ! note: this storage is used for both odeab90 AND rk4 methods 
-  y => odeab_y
-
-  ! initialize the rk4 if we are using it
-  if( step_method .eq. 1 ) then
-     call rk4init()
-  end if
-
-  if ( step_method .eq. 3 .and. hamiltonian_version .eq. 0) then       
-     write(0,*) "WARNING: Verlet step automatically uses dipole Hamiltonian."
-  end if
 
   ! Set initial values
   r0(1) = 0.0_wp ! 128165.0_wp
@@ -244,8 +234,8 @@ program mot
 
   
 
-  write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), &
-       H, escape_state, fluorescence_rate
+  write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), 0.0_wp, 0.0_wp, 0.0_wp, &
+       1.0_wp, escape_state, 1.0_wp
 
 
   !!!!!! Main integration loop
@@ -253,86 +243,7 @@ program mot
     ! write(0,*) "l=", l, "out of nout=", nout
     ! this advances the solution array 'y' from t to t+tstep
     ! note that the variable 't' gets automatically updated to t+tstep
-
-     if ( step_method .eq. 0 ) then
-        call odeab(t, t+tstep)
-        ! odeab automatically steps t forward.
-     else if ( step_method .eq. 1) then
-        call rk4step(y, t, tstep)
-        t = t+tstep
-     else if ( step_method .eq. 2) then
-        call eulerstep(y, t, tstep)
-        t = t+tstep
-     else if ( step_method .eq. 3) then       
-        call verletstep(y, t, tstep)
-        t = t+tstep
-     end if
-
-    ! Spontaneous Emission 
-    ! First calculate <sigma^dagger sigma> (<SDS>), and while were at it, we store the running
-    ! sum into sds_array. This will be used only if the decay occurs, but might as well.
-    if ( spontaneous_emission_flag .eq. 1 ) then
-  
-       if( dot_product(y(:,1),y(:,1)) .lt. focalradius**2 .and. rand_pl() .lt. photon_detection_efficiency ) then
-          photons_counted = photons_counted + 1 
-       end if
-
-    sds_sum = 0.0_wp
-    do j=1,num_beams
-       ! Detuning Matrix Construction
-       ! (we could make Delta global, as it is computed in odeab_support )
-       Delta(j) = Delta_base(j) - dot_product(k(:,j),y(:,2))/m - (hbar * dot_product(k(:,j), k(:,j)) / (2.0_wp*m))
-
-       !Sum and running sum of SDS:
-       sds_sum = sds_sum + Rabi(j)*conjg(Rabi(j))/(Gamma**2+4*Delta(j)**2)
-       sds_array(j) = sds_sum
-    end do
-
-!    ! calculate populations for saturation case
-!    call calc_populations(rho, Delta)
-!    sds_sum_sat = 0.0_wp
-!    do j=1,num_beams
-!       sds_array_sat(j) = real(rho(j,j))
-!       sds_sum_sat = sds_sum_sat + rho(j,j)
-!       write(0,*) "sds_array_sat(",j,")",sds_array_sat(j)
-!    end do
-
-  
-    ! Reset trajectory and give momentum kicks if spontaneous emission occurs:
-    if ( rand_pl() .lt. Gamma*sds_sum*tstep ) then           
-       num_emissions = num_emissions + 1
-       !write(0,*) "SPONTANEOUS EMISSION"
-       ! Atom decayed, so it must have absorbed a photon from one of the
-       ! trapping beams. The probability is proportional to that beam's
-       ! contribution to the <SDS> sum. So we normalize the running sum
-       ! and pick a random number to bin the most likely momentum state.
-
-       sds_array = sds_array/sds_sum
-       rand_mode = rand_pl()
-
-       !write(0,*) "rand_mode = ", rand_mode
-       do j=1,num_beams
-          if ( rand_mode .lt. sds_array(j) ) then
-             y(:,2) = y(:,2) + hbar*k(:,j)
-             !write(0,*) "ABSORBTION DIRECTION KICK = ", (hbar*k(:,j))
-             !write(0,*) "sds_array(j) = ", j, sds_array(j)
-             pabs_avg = pabs_avg + k(:,j)
-             pabs_count(j) = pabs_count(j) + 1
-             exit
-          end if
-       end do
-
-
-       ! And the atom also emitted a photon, so we pick a random direction,
-       ! give atom a single photon momentum kick. Maybe use dipole emission
-       ! pattern in the future, but start with uniform direction:
-
-
-!       phi = 2.0_wp*pi*rand_pl()
-!       theta = acos(2.0_wp*rand_pl()-1.0_wp)
-!       pkick(1) = cos(phi)*sin(theta)
-!       pkick(2) = sin(phi)*sin(theta)
-!       pkick(3) = cos(theta)
+     t = t + tstep
 
        do
           pkick(1) = (rand_pl()*2.0_wp)-1.0_wp
@@ -345,21 +256,11 @@ program mot
              pkick(1) = pkick(1)/pmag
              pkick(2) = pkick(2)/pmag
              pkick(3) = pkick(3)/pmag
+             y(:,1) = y(:,1) + step_size*pkick
              exit
           end if
-
        end do
 
-       pkick_avg = pkick_avg + pkick
-       y(:,2) = y(:,2) + hbar*kval*pkick
-       !write(0,*) "EMISSION DIRECTION KICK = ", (hbar*kval*pkick)
-
-       ! Reset the integrator since it doesn't appriciate us adding discontinuities.
-       ! If we don't do this, it basically ignores whatever changes we make! (This
-       ! essentially will make it forget the history of all previous steps).
-       odeab_istate = 1
-    end if
-    end if
 
     ! Do escape/return probability checks
     if ( escape_state .eq. 0 .and. dot_product(y(:,1),y(:,1)) .gt. focalthreshhold**2  ) then
@@ -384,22 +285,10 @@ program mot
     ! call handle_odeab_error()
 
     ! Calculate exact solution and output results; needs reformatting?
-    if ( hamiltonian_version .eq. 0 ) then
-       call calc_H( Delta, y(:,1), y(:,2) )
-    else if ( hamiltonian_version .eq. 1) then
-       call calc_H_dipole( Delta, y(:,1), y(:,2) )
-    end if
-
-    if ( (t-integration_reset_time) .gt. integration_time ) then
-       integration_reset_time = t;
-       fluorescence_rate = photons_counted!/integration_time  ! should be photons/integration time... but leave it like this to see
-       photons_counted = 0
-       write(0,*) "reseting photon integration counter"
-    end if
 
     if ( mod( l, save_interval ) .eq. 0 .or. escape_state .eq. 2 .or. escape_state .eq. 3 ) then
-       write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), real(y(1,2)), real(y(2,2)), real(y(3,2)), H, &
-            escape_state, fluorescence_rate
+       write(*,*) t, real(y(1,1)), real(y(2,1)), real(y(3,1)), 0.0_wp, 0.0_wp, 0.0_wp, &
+            1.0_wp, escape_state, 1.0_wp
     end if
 
     ! end the simulation if the atom has returned or escaped
@@ -421,13 +310,6 @@ program mot
   end if
 
   ! print performance statistics, if you're curious, to standard error
-  call print_odeab_stats(cumulative = .true.)
-  write(0,*) 'MOT Stats:'
-  write(0,*) 'num_emissions: ', num_emissions
-  write(0,*) 'avg emissions per step (if too big, decrease step size!): ', num_emissions*1.0_wp/(tfinal/tstep)
-  write(0,*) 'avg emission direction: ', pkick_avg/(1.0_wp*num_emissions)
-  write(0,*) 'avg absorbtion direction: ', pabs_avg/(1.0_wp*num_emissions)
-  write(0,*) 'absorbtion direction counts: ', pabs_count/(1.0_wp*num_emissions)
 
   contains
 

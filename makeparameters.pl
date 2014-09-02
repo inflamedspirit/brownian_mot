@@ -12,20 +12,22 @@ my $num_jobs = $ARGV[0];
 my $stdoutbase = "stdout";
 my $stderrbase = "stderr";
 
-# Base Parameters
+# Unused Parameters
 my $rabi_frequency=0.707;
 my $detuning=-0.12;
 my $wavenumber=1.0;
-my $decay_rate=1.0;
 my $vx=0.0;
 my $vy=0.0;
 my $vz=0.0;
+
+# Base Parameters
 my $tstep=0.1;
 my $tfinal=30000000;
-my $save_interval=1000;
+my $save_interval=100000;
+my $step_size=0.1;
 my $seed=0;
 my $focalradius=48.07;
-my $focalthreshhold=10*$focalradius;
+my $focalthreshhold=1.1*$focalradius;
 my $motradius=20.0*$focalradius;
 
 my $j;
@@ -43,7 +45,7 @@ for ($j=1; $j<=$num_jobs; $j++) {
     print $paramfh "\$rabi_frequency=$rabi_frequency;\n";
     print $paramfh "\$detuning=$detuning;\n";
     print $paramfh "\$wavenumber=$wavenumber;\n";
-    print $paramfh "\$decay_rate=$decay_rate;\n";
+    print $paramfh "\$step_size=$step_size;\n";
     print $paramfh "\$vx=$vx;\n";
     print $paramfh "\$vy=$vy;\n";
     print $paramfh "\$vz=$vz;\n";
