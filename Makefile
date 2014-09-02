@@ -13,7 +13,7 @@ SHELL = /bin/csh
 #   you could also use pgf90, another commercial compiler on the cluster,
 #   or gfortran, which you can install for free on your computer.
 F90 = gfortran
-F90FLAGS = -O3
+F90FLAGS = -O3 -g
 F90CFLAGS = -c
 F90LFLAGS =
 
@@ -33,7 +33,7 @@ F90_LOAD     = $(F90) $(F90FLAGS) $(F90LFLAGS)
 .f90.mod:
 	$(F90_COMPILE) $*.f90
 
-EXECUTABLES = mot testlin
+EXECUTABLES = mot
 
 
 # below here are listed all the dependencies; that is, before the 
@@ -47,16 +47,16 @@ EXECUTABLES = mot testlin
 
 all: $(EXECUTABLES)
 
-mot: mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o linsol.o
-	$(F90_LOAD) mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o -o mot
+mot: mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o linsol.o testlin.o
+	$(F90_LOAD) mot.o globals.o odeab90.o odeab_support.o utilities.o random_pl.o rk4.o linsol.o testlin.o -o mot
 
-testlin: testlin.o globals.o
-	$(F90_LOAD) testlin.o globals.o linsol.o \
-         -o testlin
+#testlin: testlin.o globals.o
+#	$(F90_LOAD) testlin.o globals.o linsol.o \
+#         -o testlin
 #         dgefa.o dgesl.o dgedi.o daxpy.o ddot.o  dscal.o dswap.o idamax.o \
 
 
-mot.o: globals.mod odeab90.mod odeab_support.mod utilities.mod random_pl.mod rk4.mod linsol.mod
+mot.o: globals.mod odeab90.mod odeab_support.mod utilities.mod random_pl.mod rk4.mod linsol.mod testlin.mod
 odeab90.o: odeab_support.mod
 linsol.o: globals.mod
 odeab90.mod: odeab_support.mod
@@ -65,7 +65,7 @@ linsol.mod: globals.mod
 rk4.mod: globals.mod odeab_support.mod
 utilities.mod: globals.mod
 random_pl: globals.mod
-testlin.o: globals.mod linsol.mod
+testlin.mod: globals.mod linsol.mod
 
 # this is what to do when you type "make clean"
 

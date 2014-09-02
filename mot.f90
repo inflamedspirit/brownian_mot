@@ -47,6 +47,7 @@ program mot
   use rk4
   use linsol
   use utilities
+  use testlin
 
   implicit none
 
@@ -78,11 +79,15 @@ program mot
   ! declare variables for spontaneous emission:
   real(wp), dimension(num_beams) :: Delta
   real(wp), dimension(num_beams) :: sds_array
+
   real(wp), dimension(3)         :: pkick
   real(wp), dimension(3)         :: pkick_avg
   real(wp), dimension(3)         :: pabs_avg
   real(wp), dimension(6)         :: pabs_count
   real(wp)                       :: sds_sum
+  real(wp), dimension(num_beams) :: sds_array_sat ! saturation
+  real(wp)                       :: sds_sum_sat !saturation case
+  complex(wp), dimension(num_beams+1,num_beams+1) :: rho! ssat case
   real(wp)                       :: rand_mode
   real(wp)                       :: pmag
   real(wp)                       :: phi
@@ -282,6 +287,16 @@ program mot
        sds_sum = sds_sum + Rabi(j)*conjg(Rabi(j))/(Gamma**2+4*Delta(j)**2)
        sds_array(j) = sds_sum
     end do
+
+!    ! calculate populations for saturation case
+!    call calc_populations(rho, Delta)
+!    sds_sum_sat = 0.0_wp
+!    do j=1,num_beams
+!       sds_array_sat(j) = real(rho(j,j))
+!       sds_sum_sat = sds_sum_sat + rho(j,j)
+!       write(0,*) "sds_array_sat(",j,")",sds_array_sat(j)
+!    end do
+
   
     ! Reset trajectory and give momentum kicks if spontaneous emission occurs:
     if ( rand_pl() .lt. Gamma*sds_sum*tstep ) then           
